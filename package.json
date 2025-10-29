@@ -9,7 +9,7 @@
     "watch": "tsc -w",
     "cdk": "cdk"
   },
- "devDependencies": {
+  "devDependencies": {
     "@types/aws-lambda": "^8.10.145",
     "@types/node": "22.7.4",
     "aws-cdk": "2.1027.0",
@@ -20,7 +20,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.658.1",
     "@aws-sdk/lib-dynamodb": "^3.658.1",
-    "@aws-sdk/util-dynamodb": "^3.658.1",
+    "@aws-sdk/util-dynamodb": "^3.919.0",
     "aws-cdk-lib": "2.213.0",
     "constructs": "^10.3.0",
     "source-map-support": "^0.5.21"
