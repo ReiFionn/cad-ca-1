@@ -50,6 +50,14 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
             ":a": queryParams.actorName,
             },
         };
+    } else if ("facts" in queryParams) {
+        commandInput = {...commandInput,
+            KeyConditionExpression: "movieId = :m and include facts: :f",
+            ExpressionAttributeValues: {
+            ":m": movieId,
+            ":f": queryParams.facts,
+            },
+        }
     } else {
         commandInput = { ...commandInput,
             KeyConditionExpression: "movieId = :m",
@@ -88,6 +96,6 @@ function createDocumentClient() {
     };
     const unmarshallOptions = { wrapNumbers: false };
     const translateConfig = { marshallOptions, unmarshallOptions };
-    
+
     return DynamoDBDocumentClient.from(ddbClient, translateConfig);
 }
