@@ -5,27 +5,13 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as custom from "aws-cdk-lib/custom-resources";
 import { generateBatch } from "../shared/utils";
 import {movies, movieCasts} from "../seed/movies";
+import * as apig from "aws-cdk-lib/aws-apigateway";
 
 import { Construct } from 'constructs';
 
 export class AppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-
-    const simpleFn = new lambdanode.NodejsFunction(this, "SimpleFn", {
-      architecture: lambda.Architecture.ARM_64,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      entry: `${__dirname}/../lambdas/simple.ts`,
-      timeout: cdk.Duration.seconds(10),
-      memorySize: 128,
-    });
-
-    const simpleFnURL = simpleFn.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.NONE,
-      cors: {
-        allowedOrigins: ["*"],
-      },
-    });
 
     const moviesTable = new dynamodb.Table(this, "MoviesTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -132,7 +118,32 @@ export class AppStack extends cdk.Stack {
     moviesTable.grantReadData(getMovieByIdFn)
     moviesTable.grantReadData(getAllMoviesFn)
 
-    new cdk.CfnOutput(this, "Simple Function URL", { value: simpleFnURL.url });
+    // REST API 
+    const api = new apig.RestApi(this, "RestAPI", {
+      description: "demo api",
+      deployOptions: {
+        stageName: "dev",
+      },
+      defaultCorsPreflightOptions: {
+        allowHeaders: ["Content-Type", "X-Amz-Date"],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["*"],
+      },
+    });
+
+    const moviesEndpoint = api.root.addResource("movies");
+    moviesEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getAllMoviesFn, { proxy: true })
+    );
+
+    const movieEndpoint = moviesEndpoint.addResource("{movieId}");
+    movieEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
+    );
+
     new cdk.CfnOutput(this, "Get Movie Function URL", { value: getMovieByIdURL.url });
     new cdk.CfnOutput(this, "Get All Movies Function URL", {value: getAllMoviesURL.url})
     new cdk.CfnOutput(this, "Get All Movie Cast URL", {value: getMovieCastMembersURL.url})
