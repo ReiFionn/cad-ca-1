@@ -120,6 +120,18 @@ export class AppStack extends cdk.Stack {
       },
     });
 
+    const deleteMovieFn = new lambdanode.NodejsFunction(this, "DeleteMovieFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+      entry: `${__dirname}/../lambdas/deleteMovieById.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: moviesTable.tableName,
+        REGION: cdk.Aws.REGION,
+      },
+    });
+
     const getMovieCastMembersURL = getMovieCastMembersFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
@@ -130,6 +142,7 @@ export class AppStack extends cdk.Stack {
     moviesTable.grantReadData(getMovieByIdFn)
     moviesTable.grantReadData(getAllMoviesFn)
     moviesTable.grantReadWriteData(newMovieFn)
+    moviesTable.grantWriteData(deleteMovieFn)
 
     // REST API 
     const api = new apig.RestApi(this, "RestAPI", {
@@ -160,6 +173,10 @@ export class AppStack extends cdk.Stack {
       "GET",
       new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
     );
+    movieEndpoint.addMethod(
+      "DELETE",
+      new apig.LambdaIntegration(deleteMovieFn, { proxy: true })
+    )
 
     new cdk.CfnOutput(this, "Get Movie Function URL", { value: getMovieByIdURL.url });
     new cdk.CfnOutput(this, "Get All Movies Function URL", {value: getAllMoviesURL.url})
