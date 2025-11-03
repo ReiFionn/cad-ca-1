@@ -103,8 +103,8 @@ export class AppStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(10),
       memorySize: 128,
       environment: {
-        CAST_TABLE_NAME: movieCastsTable.tableName,
-        REGION: "eu-west-1",
+        TABLE_NAME: movieCastsTable.tableName,
+        REGION: cdk.Aws.REGION,
       },
     });
 
@@ -144,6 +144,8 @@ export class AppStack extends cdk.Stack {
     moviesTable.grantReadWriteData(newMovieFn)
     moviesTable.grantWriteData(deleteMovieFn)
 
+    movieCastsTable.grantReadData(getMovieCastMembersFn)
+
     // REST API 
     const api = new apig.RestApi(this, "RestAPI", {
       description: "demo api",
@@ -177,6 +179,12 @@ export class AppStack extends cdk.Stack {
       "DELETE",
       new apig.LambdaIntegration(deleteMovieFn, { proxy: true })
     )
+
+    const movieCastEndpoint = moviesEndpoint.addResource("cast");
+    movieCastEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getMovieCastMembersFn, { proxy: true })
+    );
 
     new cdk.CfnOutput(this, "Get Movie Function URL", { value: getMovieByIdURL.url });
     new cdk.CfnOutput(this, "Get All Movies Function URL", {value: getAllMoviesURL.url})
