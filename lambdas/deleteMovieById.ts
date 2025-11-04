@@ -1,7 +1,6 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda"
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { DBClusterStorageType } from "aws-cdk-lib/aws-rds";
+import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 
 // Initialization
 const ddbDocClient = createDDbDocClient();
@@ -23,10 +22,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       };
     }
 
-    const cast = event.queryStringParameters?.cast === "true"
-
     const commandOutput = await ddbDocClient.send(
-      new GetCommand({
+      new DeleteCommand({
         TableName: process.env.TABLE_NAME,
         Key: { id: movieId },
       })
@@ -34,7 +31,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
     console.log('GetCommand response: ', commandOutput)
 
-    if (!commandOutput.Item) {
+    if (!commandOutput) {
       return {
         statusCode: 404,
         headers: {
@@ -43,20 +40,9 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         body: JSON.stringify({ Message: "Invalid movie Id" }),
       };
     }
-
-    let result: any = {...commandOutput.Item}
-
-    if (cast) {
-      const castCommandOutput = await ddbDocClient.send(
-        new QueryCommand({
-          TableName: process.env.CAST_TABLE_NAME!,
-          KeyConditionExpression: "movieId = :movieId",
-          ExpressionAttributeValues: { ":movieId": movieId },
-        })
-      )
-
-      result.cast = castCommandOutput.Items || []
-    }
+    const body = {
+      data: commandOutput,
+    };
 
     // Return Response
     return {
@@ -64,7 +50,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify(result),
+      body: JSON.stringify(body),
     };
   } catch (error: any) {
     console.log(JSON.stringify(error));
