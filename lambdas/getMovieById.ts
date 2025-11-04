@@ -1,6 +1,7 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda"
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DBClusterStorageType } from "aws-cdk-lib/aws-rds";
 
 // Initialization
 const ddbDocClient = createDDbDocClient();
@@ -22,6 +23,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       };
     }
 
+    const cast = event.queryStringParameters?.cast === "true"
+
     const commandOutput = await ddbDocClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
@@ -40,9 +43,20 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         body: JSON.stringify({ Message: "Invalid movie Id" }),
       };
     }
-    const body = {
-      data: commandOutput.Item,
-    };
+
+    let result: any = {...commandOutput.Item}
+
+    if (cast) {
+      const castCommandOutput = await ddbDocClient.send(
+        new QueryCommand({
+          TableName: process.env.CAST_TABLE_NAME!,
+          KeyConditionExpression: "movieId = :movieId",
+          ExpressionAttributeValues: { ":movieId": movieId },
+        })
+      )
+
+      result.cast = castCommandOutput.Items || []
+    }
 
     // Return Response
     return {
@@ -50,7 +64,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(result),
     };
   } catch (error: any) {
     console.log(JSON.stringify(error));

@@ -14,7 +14,7 @@ const ddbDocClient = createDocumentClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
-    console.log("[EVENT]", JSON.stringify(event));
+    console.log("[EVENT]", event);
     const queryParams = event.queryStringParameters;
 
     if (!queryParams) {
@@ -85,13 +85,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     };
 
     } catch (error: any) {
-        console.log(JSON.stringify(error));
+        console.log(error.message);
         return {
             statusCode: 500,
             headers: {
                 "content-type": "application/json",
             },
-            body: JSON.stringify({ error }),
+            body: error.message,
         };
     }
  };
