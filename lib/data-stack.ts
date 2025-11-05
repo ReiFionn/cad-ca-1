@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as custom from "aws-cdk-lib/custom-resources";
 import { generateBatch } from "../shared/utils";
-import {movies, movieCasts} from "../seed/movies";
+import {movies, actors} from "../seed/movies";
 
 import { Construct } from 'constructs';
 
@@ -10,30 +10,29 @@ import { Construct } from 'constructs';
 
 export class DataStack extends cdk.Stack {
     public readonly moviesTable: dynamodb.Table
-    public readonly movieCastsTable: dynamodb.Table
+    public readonly actorsTable: dynamodb.Table
 
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props)
 
         this.moviesTable = new dynamodb.Table(this, "MoviesTable", {
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-            partitionKey: { name: "id", type: dynamodb.AttributeType.NUMBER },
+            partitionKey: { name: "movie_id", type: dynamodb.AttributeType.NUMBER },
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             tableName: "Movies",
         });
 
-        this.movieCastsTable = new dynamodb.Table(this, "MovieCastTable", {
+        this.actorsTable = new dynamodb.Table(this, "ActorsTable", {
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-            partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
-            sortKey: { name: "actorName", type: dynamodb.AttributeType.STRING },
+            partitionKey: { name: "actor_id", type: dynamodb.AttributeType.NUMBER },
             removalPolicy: cdk.RemovalPolicy.DESTROY,
-            tableName: "MovieCast",
+            tableName: "Actors",
         });
 
-        this.movieCastsTable.addLocalSecondaryIndex({
-            indexName: "roleIx",
-            sortKey: { name: "roleName", type: dynamodb.AttributeType.STRING },
-        });
+        // this.actorsTable.addLocalSecondaryIndex({
+        //     indexName: "roleIx",
+        //     sortKey: { name: "role_name", type: dynamodb.AttributeType.STRING },
+        // });
         
         new custom.AwsCustomResource(this, "moviesddbInitData", {
             onCreate: {
@@ -42,13 +41,13 @@ export class DataStack extends cdk.Stack {
             parameters: {
                 RequestItems: {
                 [this.moviesTable.tableName]: generateBatch(movies),
-                [this.movieCastsTable.tableName]: generateBatch(movieCasts),
+                [this.actorsTable.tableName]: generateBatch(actors),
                 },
             },
             physicalResourceId: custom.PhysicalResourceId.of(`moviesInit-${Date.now()}`),
             },
             policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
-            resources: [this.moviesTable.tableArn, this.movieCastsTable.tableArn],
+            resources: [this.moviesTable.tableArn, this.actorsTable.tableArn],
             }),
         });
     }

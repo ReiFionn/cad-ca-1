@@ -10,7 +10,7 @@ const ddbDocClient = createDDbDocClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
-    console.log("[EVENT]", JSON.stringify(event));
+    console.log("[EVENT]", event);
     const body = event.body ? JSON.parse(event.body) : undefined;
     if (!body) {
       return {
@@ -18,7 +18,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ message: "Missing request body" }),
+        body: "Missing request body",
       };
     }
 
@@ -28,10 +28,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({
-          message: `Incorrect type. Must match Movie schema`,
-          schema: schema.definitions["Movie"],
-        }),
+        body: "Incorrect type. Must match Movie schema"
       };
     }
 
@@ -46,16 +43,16 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ message: "Movie added" }),
+      body: "Movie added"
     };
   } catch (error: any) {
-    console.log(JSON.stringify(error));
+    console.log(error);
     return {
       statusCode: 500,
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ error }),
+      body: error,
     };
   }
 };

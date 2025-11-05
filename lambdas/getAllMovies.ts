@@ -6,7 +6,8 @@ const ddbDocClient = createDDbDocClient();
 
 export const handler: Handler = async (event, context) => {
   try {
-    console.log("Event: ", JSON.stringify(event));
+    console.log("Event: ", event);
+    
     const commandOutput = await ddbDocClient.send(
       new ScanCommand({
         TableName: process.env.TABLE_NAME,
@@ -19,7 +20,7 @@ export const handler: Handler = async (event, context) => {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({Message: "Invalid movie Id"}),
+        body: JSON.stringify("Invalid movie Id")
       };
     }
 

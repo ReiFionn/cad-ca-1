@@ -1,35 +1,32 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda"
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { DBClusterStorageType } from "aws-cdk-lib/aws-rds";
 
 // Initialization
 const ddbDocClient = createDDbDocClient();
 
 // Handler
-export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
+export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
-    console.log("[EVENT]", event);
     const parameters  = event?.pathParameters;
     const movie_id = parameters?.movie_id ? parseInt(parameters.movie_id) : undefined;
+    const actor_id = parameters?.actor_id ? parseInt(parameters.actor_id) : undefined;
 
-    if (!movie_id) {
-      return {
+    if (!movie_id || !actor_id) {
+        return {
         statusCode: 404,
         headers: {
           "content-type": "application/json",
         },
-        body: "Missing movie Id",
+        body: "Missing parameters",
       };
     }
 
-    const cast = event.queryStringParameters?.cast === "true"
-
     const commandOutput = await ddbDocClient.send(
-      new GetCommand({
-        TableName: process.env.TABLE_NAME,
-        Key: { movie_id },
-      })
+        new GetCommand({
+            TableName: process.env.TABLE_NAME,
+            Key: { actor_id },
+        })
     );
 
     console.log('GetCommand response: ', commandOutput)
@@ -40,43 +37,28 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Invalid movie Id" }),
+        body: { Message: "Invalid parameters" },
       };
     }
 
-    let result: any = {...commandOutput.Item}
-
-    if (cast) {
-      const castCommandOutput = await ddbDocClient.send(
-        new QueryCommand({
-          TableName: process.env.CAST_TABLE_NAME!,
-          KeyConditionExpression: "movie_id = :movie_id",
-          ExpressionAttributeValues: { ":movie_id": movie_id },
-        })
-      )
-
-      result.cast = castCommandOutput.Items || []
-    }
-
-    // Return Response
     return {
       statusCode: 200,
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify(result),
+      body: JSON.stringify(commandOutput.Item),
     };
   } catch (error: any) {
-    console.log(JSON.stringify(error));
+    console.log(error);
     return {
       statusCode: 500,
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ error }),
+      body: JSON.stringify(error),
     };
   }
-};
+}
 
 function createDDbDocClient() {
   const ddbClient = new DynamoDBClient({ region: process.env.REGION });
@@ -91,4 +73,3 @@ function createDDbDocClient() {
   const translateConfig = { marshallOptions, unmarshallOptions };
   return DynamoDBDocumentClient.from(ddbClient, translateConfig);
 }
-
