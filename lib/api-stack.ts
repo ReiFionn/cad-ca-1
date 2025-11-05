@@ -9,13 +9,15 @@ import { Construct } from 'constructs';
 interface ApiStackProps extends cdk.StackProps {
     moviesTable: dynamodb.ITable
     actorsTable: dynamodb.ITable
+    //castTable: dynamodb.ITable
+    awardsTable: dynamodb.ITable
 }
 
 export class ApiStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: ApiStackProps) {
         super(scope, id, props)
 
-        const { moviesTable, actorsTable } = props
+        const { moviesTable, actorsTable, awardsTable } = props
 
         const getMovieByIdFn = new lambdanode.NodejsFunction(this, "GetMovieByIdFn",{
                 architecture: lambda.Architecture.ARM_64,
@@ -96,12 +98,42 @@ export class ApiStack extends cdk.Stack {
             }
         );
 
+        // const getMovieCastFn = new lambdanode.NodejsFunction(this, "GetMovieCastFn", {
+        //     architecture: lambda.Architecture.ARM_64,
+        //         runtime: lambda.Runtime.NODEJS_16_X,
+        //         entry: `${__dirname}/../lambdas/getMovieCast.ts`,
+        //         timeout: cdk.Duration.seconds(10),
+        //         memorySize: 128,
+        //         environment: {
+        //             TABLE_NAME: castTable.tableName,
+        //             REGION: cdk.Aws.REGION,
+        //         },
+        //     }
+        // )
+
+        const getAllAwardsFn = new lambdanode.NodejsFunction(this, "GetAllAwardsFn", {
+                architecture: lambda.Architecture.ARM_64,
+                runtime: lambda.Runtime.NODEJS_18_X,
+                entry: `${__dirname}/../lambdas/getAllAwards.ts`,
+                timeout: cdk.Duration.seconds(10),
+                memorySize: 128,
+                environment: {
+                    TABLE_NAME: awardsTable.tableName,
+                    REGION: cdk.Aws.REGION,
+                },
+            }
+        );
+
+
+
         moviesTable.grantReadData(getMovieByIdFn)
         moviesTable.grantReadData(getAllMoviesFn)
         moviesTable.grantReadWriteData(addMovieFn)
         moviesTable.grantWriteData(deleteMovieFn)
         actorsTable.grantReadData(getAllActorsFn)
         actorsTable.grantReadData(getActorByIdFn)
+        //castTable.grantReadData(getMovieCast)
+        awardsTable.grantReadData(getAllAwardsFn)
 
         // REST API 
         const api = new apig.RestApi(this, "MoviesAPI", {
@@ -131,5 +163,8 @@ export class ApiStack extends cdk.Stack {
 
         const actorEndpoint = actorsEndpoint.addResource("{actor_id}");
         actorEndpoint.addMethod("GET", new apig.LambdaIntegration(getActorByIdFn, { proxy: true }))
+
+        const awardsEndpoint = api.root.addResource("awards");
+        awardsEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllAwardsFn, { proxy: true }))
     }
 }

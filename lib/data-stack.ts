@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as custom from "aws-cdk-lib/custom-resources";
 import { generateBatch } from "../shared/utils";
-import {movies, actors} from "../seed/movies";
+import {movies, actors, cast, awards} from "../seed/movies";
 
 import { Construct } from 'constructs';
 
@@ -11,6 +11,8 @@ import { Construct } from 'constructs';
 export class DataStack extends cdk.Stack {
     public readonly moviesTable: dynamodb.Table
     public readonly actorsTable: dynamodb.Table
+    //public readonly castTable: dynamodb.Table
+    public readonly awardsTable: dynamodb.Table
 
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props)
@@ -29,10 +31,24 @@ export class DataStack extends cdk.Stack {
             tableName: "Actors",
         });
 
-        // this.actorsTable.addLocalSecondaryIndex({
-        //     indexName: "roleIx",
-        //     sortKey: { name: "role_name", type: dynamodb.AttributeType.STRING },
-        // });
+        // this.castTable = new dynamodb.Table(this, "CastTable", {
+        //     billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        //     partitionKey: { name: "movie_id", type: dynamodb.AttributeType.NUMBER },
+        //     removalPolicy: cdk.RemovalPolicy.DESTROY,
+        //     tableName: "Cast",
+        //     }
+        // )
+
+        // this.castTable.addLocalSecondaryIndex({
+        //     indexNmae: ""
+        // })
+
+        this.awardsTable = new dynamodb.Table(this, "AwardsTable", {
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+            partitionKey: { name: "award_id", type: dynamodb.AttributeType.NUMBER },
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+            tableName: "Awards",
+        })
         
         new custom.AwsCustomResource(this, "moviesddbInitData", {
             onCreate: {
@@ -42,12 +58,13 @@ export class DataStack extends cdk.Stack {
                 RequestItems: {
                 [this.moviesTable.tableName]: generateBatch(movies),
                 [this.actorsTable.tableName]: generateBatch(actors),
+                [this.awardsTable.tableName]: generateBatch(awards),
                 },
             },
             physicalResourceId: custom.PhysicalResourceId.of(`moviesInit-${Date.now()}`),
             },
             policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
-            resources: [this.moviesTable.tableArn, this.actorsTable.tableArn],
+            resources: [this.moviesTable.tableArn, this.actorsTable.tableArn, this.awardsTable.tableArn],
             }),
         });
     }

@@ -1,4 +1,4 @@
-import {Movie, Actor, Cast} from '../shared/types'
+import {Movie, Actor, Cast, Award} from '../shared/types'
 
 export const movies: Movie[] = [
   {
@@ -42,7 +42,7 @@ export const actors: Actor[] = [
   }
 ];
 
-export const casts: Cast[] = [
+export const cast: Cast[] = [
   {
     movie_id: 1234,
     actor_id: 1,
@@ -66,5 +66,32 @@ export const casts: Cast[] = [
     actor_id: 1,
     role_name: "Male Character 1",
     role_description: "description of character 3"
+  }
+];
+
+export const awards: Award[] = [
+  {
+    award_id: 1,
+    body: "ewgwegwegweg",
+    category: "Best Picture",
+    year: 2025
+  },
+  {
+    award_id: 2,
+    body: "ewgwegwegweg",
+    category: "Best Animated Picture",
+    year: 2025
+  },
+  {
+    award_id: 3,
+    body: "ewgwegwegweg",
+    category: "Best Soundtrack",
+    year: 2025
+  },
+  {
+    award_id: 4,
+    body: "ewgwegwegweg",
+    category: "Best Director",
+    year: 2025
   }
 ];

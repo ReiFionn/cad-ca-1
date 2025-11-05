@@ -6,4 +6,4 @@ import { ApiStack } from '../lib/api-stack'
 const app = new cdk.App();
 const dataStack = new DataStack(app, "DataStack")
 
-new ApiStack(app, 'ApiStack', { moviesTable: dataStack.moviesTable, actorsTable: dataStack.actorsTable});
+new ApiStack(app, 'ApiStack', { moviesTable: dataStack.moviesTable, actorsTable: dataStack.actorsTable, awardsTable: dataStack.awardsTable});
