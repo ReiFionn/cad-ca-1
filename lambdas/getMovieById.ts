@@ -64,10 +64,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify(result),
+      body: JSON.stringify({ result }),
     };
   } catch (error: any) {
-    console.log(JSON.stringify(error));
+    console.log(JSON.stringify({ error }));
     return {
       statusCode: 500,
       headers: {

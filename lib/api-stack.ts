@@ -124,7 +124,7 @@ export class ApiStack extends cdk.Stack {
             }
         );
 
-
+        
 
         moviesTable.grantReadData(getMovieByIdFn)
         moviesTable.grantReadData(getAllMoviesFn)

@@ -49,6 +49,11 @@ export class DataStack extends cdk.Stack {
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             tableName: "Awards",
         })
+
+        // this.awardsTable.addLocalSecondaryIndex({
+        //     indexName: "movieIx",
+        //     sortKey: {name: "movie_id", type: dynamodb.AttributeType.NUMBER}
+        // })
         
         new custom.AwsCustomResource(this, "moviesddbInitData", {
             onCreate: {

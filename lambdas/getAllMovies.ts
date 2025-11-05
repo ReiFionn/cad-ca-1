@@ -20,7 +20,7 @@ export const handler: Handler = async (event, context) => {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify("Invalid movie Id")
+        body: "Invalid movie Id"
       };
     }
 
@@ -33,10 +33,10 @@ export const handler: Handler = async (event, context) => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ body }),
     };
   } catch (error: any) {
-    console.log(JSON.stringify(error));
+    console.log(JSON.stringify({ error }));
     return {
       statusCode: 500,
       headers: {
