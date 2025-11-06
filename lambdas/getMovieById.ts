@@ -28,7 +28,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const commandOutput = await ddbDocClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
-        Key: { movie_id },
+        Key: { partition: `m${movie_id}`, sort: "xxxx"},
       })
     );
 
@@ -46,17 +46,17 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
     let result: any = {...commandOutput.Item}
 
-    if (cast) {
-      const castCommandOutput = await ddbDocClient.send(
-        new QueryCommand({
-          TableName: process.env.CAST_TABLE_NAME!,
-          KeyConditionExpression: "movie_id = :movie_id",
-          ExpressionAttributeValues: { ":movie_id": movie_id },
-        })
-      )
+    // if (cast) {
+    //   const castCommandOutput = await ddbDocClient.send(
+    //     new QueryCommand({
+    //       TableName: process.env.CAST_TABLE_NAME!,
+    //       KeyConditionExpression: "movie_id = :movie_id",
+    //       ExpressionAttributeValues: { ":movie_id": movie_id },
+    //     })
+    //   )
 
-      result.cast = castCommandOutput.Items || []
-    }
+    //   result.cast = castCommandOutput.Items || []
+    // }
 
     // Return Response
     return {

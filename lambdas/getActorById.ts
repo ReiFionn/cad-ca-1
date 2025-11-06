@@ -23,10 +23,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     }
 
     const commandOutput = await ddbDocClient.send(
-        new GetCommand({
-            TableName: process.env.TABLE_NAME,
-            Key: { actor_id },
-        })
+      new GetCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: { partition: `a${actor_id}`, sort: "xxxx"},
+      })
     );
 
     console.log('GetCommand response: ', commandOutput)

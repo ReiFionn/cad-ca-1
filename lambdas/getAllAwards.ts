@@ -16,13 +16,24 @@ export const handler: Handler = async (event, context) => {
     const queryParams = event.queryStringParameters;
 
     if (!queryParams) {
-        return {
-            statusCode: 500,
-            headers: {
-                "content-type": "application/json"
+        const commandOutput = await ddbDocClient.send(new ScanCommand({
+            TableName: process.env.TABLE_NAME,
+            FilterExpression: "begins_with(#partition, :w)",
+            ExpressionAttributeNames: {
+            "#partition": "partition"
             },
-            body: JSON.stringify({ message: "Missing query parameters" })
-        }
+            ExpressionAttributeValues: {
+            ":w": "w"
+            }
+        })) 
+
+      return {
+        statusCode: 200,
+        headers: {
+            "content-type": "application/json",
+        },
+        body: JSON.stringify({data: commandOutput.Items}),
+      };
     }
 
     if (!isValidQueryParams(queryParams)) {
