@@ -11,6 +11,13 @@ export const handler: Handler = async (event, context) => {
     const commandOutput = await ddbDocClient.send(
       new ScanCommand({
         TableName: process.env.TABLE_NAME,
+        FilterExpression: "begins_with(#partition, :m)",
+        ExpressionAttributeNames: {
+          "#partition": "partition"
+        },
+        ExpressionAttributeValues: {
+          ":m": "m"
+        }        
       })
     );
 

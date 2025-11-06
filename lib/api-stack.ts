@@ -7,17 +7,14 @@ import * as apig from "aws-cdk-lib/aws-apigateway";
 import { Construct } from 'constructs';
 
 interface ApiStackProps extends cdk.StackProps {
-    moviesTable: dynamodb.ITable
-    actorsTable: dynamodb.ITable
-    //castTable: dynamodb.ITable
-    awardsTable: dynamodb.ITable
+    moviesAppTable: dynamodb.ITable
 }
 
 export class ApiStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: ApiStackProps) {
         super(scope, id, props)
 
-        const { moviesTable, actorsTable, awardsTable } = props
+        const { moviesAppTable } = props
 
         const getMovieByIdFn = new lambdanode.NodejsFunction(this, "GetMovieByIdFn",{
                 architecture: lambda.Architecture.ARM_64,
@@ -26,8 +23,7 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: moviesTable.tableName,
-                    CAST_TABLE_NAME: actorsTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -40,7 +36,7 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: moviesTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -53,7 +49,7 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: actorsTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -66,7 +62,7 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: actorsTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -79,7 +75,7 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: moviesTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -92,7 +88,7 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: moviesTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -118,7 +114,7 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: awardsTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -126,14 +122,14 @@ export class ApiStack extends cdk.Stack {
 
         
 
-        moviesTable.grantReadData(getMovieByIdFn)
-        moviesTable.grantReadData(getAllMoviesFn)
-        moviesTable.grantReadWriteData(addMovieFn)
-        moviesTable.grantWriteData(deleteMovieFn)
-        actorsTable.grantReadData(getAllActorsFn)
-        actorsTable.grantReadData(getActorByIdFn)
+        moviesAppTable.grantReadData(getMovieByIdFn)
+        moviesAppTable.grantReadData(getAllMoviesFn)
+        moviesAppTable.grantReadWriteData(addMovieFn)
+        moviesAppTable.grantWriteData(deleteMovieFn)
+        moviesAppTable.grantReadData(getAllActorsFn)
+        moviesAppTable.grantReadData(getActorByIdFn)
         //castTable.grantReadData(getMovieCast)
-        awardsTable.grantReadData(getAllAwardsFn)
+        moviesAppTable.grantReadData(getAllAwardsFn)
 
         // REST API 
         const api = new apig.RestApi(this, "MoviesAPI", {

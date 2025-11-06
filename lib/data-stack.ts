@@ -9,67 +9,55 @@ import { Construct } from 'constructs';
 //https://docs.aws.amazon.com/cdk/v2/guide/stack-how-to-create-multiple-stacks.html
 
 export class DataStack extends cdk.Stack {
-    public readonly moviesTable: dynamodb.Table
-    public readonly actorsTable: dynamodb.Table
-    //public readonly castTable: dynamodb.Table
-    public readonly awardsTable: dynamodb.Table
+    public readonly moviesAppTable: dynamodb.Table
 
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props)
 
-        this.moviesTable = new dynamodb.Table(this, "MoviesTable", {
+        this.moviesAppTable = new dynamodb.Table(this, "MoviesAppTable", {
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-            partitionKey: { name: "movie_id", type: dynamodb.AttributeType.NUMBER },
+            partitionKey: { name: "partition", type: dynamodb.AttributeType.STRING },
+            sortKey: { name: "sort", type: dynamodb.AttributeType.STRING},
             removalPolicy: cdk.RemovalPolicy.DESTROY,
-            tableName: "Movies",
+            tableName: "MoviesApp",
         });
 
-        this.actorsTable = new dynamodb.Table(this, "ActorsTable", {
-            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-            partitionKey: { name: "actor_id", type: dynamodb.AttributeType.NUMBER },
-            removalPolicy: cdk.RemovalPolicy.DESTROY,
-            tableName: "Actors",
-        });
+        const batchData = [
+            ...movies.map(m => ({ //https://www.slingacademy.com/article/using-array-map-method-in-typescript/ 
+                partition: `m${m.movie_id}`, //https://www.geeksforgeeks.org/typescript/how-to-format-strings-in-typescript/
+                sort: "xxxx",
+                ...m
+            })),
+            ...actors.map(a => ({
+                partition: `a${a.actor_id}`,
+                sort: "xxxx",
+                ...a
+            })),
+            ...cast.map(c => ({
+                partition: `c${c.movie_id}`,
+                sort: `${c.actor_id}`,
+                ...c
+            })),
+            ...awards.map(w => ({
+                partition: `w${w.award_id}`,
+                sort: w.body,
+                ...w
+            }))
+        ]
 
-        // this.castTable = new dynamodb.Table(this, "CastTable", {
-        //     billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        //     partitionKey: { name: "movie_id", type: dynamodb.AttributeType.NUMBER },
-        //     removalPolicy: cdk.RemovalPolicy.DESTROY,
-        //     tableName: "Cast",
-        //     }
-        // )
-
-        // this.castTable.addLocalSecondaryIndex({
-        //     indexNmae: ""
-        // })
-
-        this.awardsTable = new dynamodb.Table(this, "AwardsTable", {
-            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-            partitionKey: { name: "award_id", type: dynamodb.AttributeType.NUMBER },
-            removalPolicy: cdk.RemovalPolicy.DESTROY,
-            tableName: "Awards",
-        })
-
-        // this.awardsTable.addLocalSecondaryIndex({
-        //     indexName: "movieIx",
-        //     sortKey: {name: "movie_id", type: dynamodb.AttributeType.NUMBER}
-        // })
-        
         new custom.AwsCustomResource(this, "moviesddbInitData", {
             onCreate: {
             service: "DynamoDB",
             action: "batchWriteItem",
             parameters: {
                 RequestItems: {
-                [this.moviesTable.tableName]: generateBatch(movies),
-                [this.actorsTable.tableName]: generateBatch(actors),
-                [this.awardsTable.tableName]: generateBatch(awards),
+                    [this.moviesAppTable.tableName]: generateBatch(batchData),
                 },
             },
             physicalResourceId: custom.PhysicalResourceId.of(`moviesInit-${Date.now()}`),
             },
             policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
-            resources: [this.moviesTable.tableArn, this.actorsTable.tableArn, this.awardsTable.tableArn],
+            resources: [this.moviesAppTable.tableArn],
             }),
         });
     }
