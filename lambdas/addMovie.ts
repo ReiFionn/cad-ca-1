@@ -35,9 +35,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const commandOutput = await ddbDocClient.send(
       new PutCommand({
         TableName: process.env.TABLE_NAME,
-        Item: body,
+        Item: {partition: `m${body.movie_id}`, sort: "xxxx", ...body},
       })
     );
+
     return {
       statusCode: 201,
       headers: {

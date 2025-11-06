@@ -10,9 +10,9 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("[EVENT]", event);
     const parameters  = event?.pathParameters;
-    const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
+    const movie_id = parameters?.movie_id ? parseInt(parameters.movie_id) : undefined;
 
-    if (!movieId) {
+    if (!movie_id) {
       return {
         statusCode: 404,
         headers: {
@@ -25,7 +25,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const commandOutput = await ddbDocClient.send(
       new DeleteCommand({
         TableName: process.env.TABLE_NAME,
-        Key: { id: movieId },
+        Key: { partition: `m${movie_id}`, sort: "xxxx"},
       })
     );
 

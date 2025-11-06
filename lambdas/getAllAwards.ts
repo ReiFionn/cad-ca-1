@@ -4,8 +4,9 @@ import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommandInput, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import Ajv from "ajv";
 import schema from "../shared/types.schema.json"
+import { coerceAndCheckDataType } from "ajv/dist/compile/validate/dataType";
 
-const ajv = new Ajv();
+const ajv = new Ajv({coerceTypes: true}); //https://ajv.js.org/coercion.html
 const isValidQueryParams = ajv.compile(schema.definitions["AwardsQueryParams"] || {});
 const ddbDocClient = createDDbDocClient();
 
@@ -13,7 +14,7 @@ export const handler: Handler = async (event, context) => {
   try {
     console.log("Event: ", JSON.stringify(event));
 
-    const queryParams = event.queryStringParameters;
+    const queryParams = event.queryStringParameters
 
     if (!queryParams) {
         const commandOutput = await ddbDocClient.send(new ScanCommand({
@@ -49,33 +50,33 @@ export const handler: Handler = async (event, context) => {
         }
     }
 
-    const award_id = parseInt(queryParams.award_id)
-    
+    const award_id = event?.pathParameters?.award_id ? parseInt(event?.pathParameters.award_id) : undefined;
+
     let commandInput: QueryCommandInput = { TableName: process.env.TABLE_NAME }
 
-    if ("movie" in queryParams) {
+    if ("movie_id" in queryParams) {
         commandInput = {...commandInput,
             IndexName: "movieIx",
             KeyConditionExpression: "award_id = :w and begins_with(movie_id, :m)",
             ExpressionAttributeValues: {
                 ":w": award_id,
-                ":m": queryParams.movie
+                ":m": queryParams.movie_id
             }
         }
-    } else if ("actor" in queryParams) {
+    } else if ("actor_id" in queryParams) {
         commandInput = {...commandInput,
             KeyConditionExpression: "award_id = :w and begins_with(actor_id, :a)",
             ExpressionAttributeValues: {
                 ":w": award_id,
-                ":a": queryParams.actor
+                ":a": queryParams.actor_id
             }
         }
-    } else if ("awardBody" in queryParams) {
+    } else if ("award_body" in queryParams) {
         commandInput = {...commandInput,
-            KeyConditionExpression: "award_id = :w and begins_with(awardBody, :b)",
+            KeyConditionExpression: "award_id = :w and begins_with(award_body, :b)",
             ExpressionAttributeValues: {
                 ":w": award_id,
-                ":b": queryParams.awardBody
+                ":b": queryParams.award_body
             }
         }
     } else {
