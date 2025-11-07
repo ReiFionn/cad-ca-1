@@ -45,6 +45,13 @@ export class CognitoStack extends cdk.Stack {
       "SignupFn",
       'signup.ts'
     );
+
+    this.addAuthRoute(
+      "confirm_signup",
+      "POST",
+      "ConfirmFn",
+      "confirm-signup.ts"
+    )
   }
 
   private addAuthRoute( resourceName: string, method: string, fnName: string, fnEntry: string, allowCognitoAccess?: boolean): void {
