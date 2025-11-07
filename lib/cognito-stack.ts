@@ -38,6 +38,13 @@ export class CognitoStack extends cdk.Stack {
     });
 
     this.auth = authApi.root.addResource("auth");
+
+    this.addAuthRoute(
+      "signup",
+      "POST",
+      "SignupFn",
+      'signup.ts'
+    );
   }
 
   private addAuthRoute( resourceName: string, method: string, fnName: string, fnEntry: string, allowCognitoAccess?: boolean): void {
@@ -58,7 +65,7 @@ export class CognitoStack extends cdk.Stack {
     
     const fn = new node.NodejsFunction(this, fnName, {
       ...commonFnProps,
-      entry: `${__dirname}/../lambda/auth/${fnEntry}`,
+      entry: `${__dirname}/../lambdas/auth/${fnEntry}`,
     });
 
     resource.addMethod(method, new apig.LambdaIntegration(fn));
