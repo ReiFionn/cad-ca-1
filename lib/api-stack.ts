@@ -7,15 +7,14 @@ import * as apig from "aws-cdk-lib/aws-apigateway";
 import { Construct } from 'constructs';
 
 interface ApiStackProps extends cdk.StackProps {
-    moviesTable: dynamodb.ITable
-    movieCastsTable: dynamodb.ITable
+    moviesAppTable: dynamodb.ITable
 }
 
 export class ApiStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: ApiStackProps) {
         super(scope, id, props)
 
-        const { moviesTable, movieCastsTable } = props
+        const { moviesAppTable } = props
 
         const getMovieByIdFn = new lambdanode.NodejsFunction(this, "GetMovieByIdFn",{
                 architecture: lambda.Architecture.ARM_64,
@@ -24,8 +23,7 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: moviesTable.tableName,
-                    CAST_TABLE_NAME: movieCastsTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -38,20 +36,33 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: moviesTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
         );
 
-        const getMovieCastMembersFn = new lambdanode.NodejsFunction(this, "GetCastMemberFn", {
+        const getAllActorsFn = new lambdanode.NodejsFunction(this, "GetAllActorsFn", {
                 architecture: lambda.Architecture.ARM_64,
                 runtime: lambda.Runtime.NODEJS_16_X,
-                entry: `${__dirname}/../lambdas/getMovieCastMembers.ts`,
+                entry: `${__dirname}/../lambdas/getAllActors.ts`,
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: movieCastsTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
+                    REGION: cdk.Aws.REGION,
+                },
+            }
+        );
+
+        const getActorByIdFn = new lambdanode.NodejsFunction(this, "GetActorByIdFn",{
+                architecture: lambda.Architecture.ARM_64,
+                runtime: lambda.Runtime.NODEJS_18_X,
+                entry: `${__dirname}/../lambdas/getActorById.ts`,
+                timeout: cdk.Duration.seconds(10),
+                memorySize: 128,
+                environment: {
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -64,7 +75,7 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: moviesTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
@@ -77,17 +88,48 @@ export class ApiStack extends cdk.Stack {
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
-                    TABLE_NAME: moviesTable.tableName,
+                    TABLE_NAME: moviesAppTable.tableName,
                     REGION: cdk.Aws.REGION,
                 },
             }
         );
 
-        moviesTable.grantReadData(getMovieByIdFn)
-        moviesTable.grantReadData(getAllMoviesFn)
-        moviesTable.grantReadWriteData(addMovieFn)
-        moviesTable.grantWriteData(deleteMovieFn)
-        movieCastsTable.grantReadData(getMovieCastMembersFn)
+        // const getMovieCastFn = new lambdanode.NodejsFunction(this, "GetMovieCastFn", {
+        //     architecture: lambda.Architecture.ARM_64,
+        //         runtime: lambda.Runtime.NODEJS_16_X,
+        //         entry: `${__dirname}/../lambdas/getMovieCast.ts`,
+        //         timeout: cdk.Duration.seconds(10),
+        //         memorySize: 128,
+        //         environment: {
+        //             TABLE_NAME: castTable.tableName,
+        //             REGION: cdk.Aws.REGION,
+        //         },
+        //     }
+        // )
+
+        const getAllAwardsFn = new lambdanode.NodejsFunction(this, "GetAllAwardsFn", {
+                architecture: lambda.Architecture.ARM_64,
+                runtime: lambda.Runtime.NODEJS_18_X,
+                entry: `${__dirname}/../lambdas/getAllAwards.ts`,
+                timeout: cdk.Duration.seconds(10),
+                memorySize: 128,
+                environment: {
+                    TABLE_NAME: moviesAppTable.tableName,
+                    REGION: cdk.Aws.REGION,
+                },
+            }
+        );
+
+        
+
+        moviesAppTable.grantReadData(getMovieByIdFn)
+        moviesAppTable.grantReadData(getAllMoviesFn)
+        moviesAppTable.grantReadWriteData(addMovieFn)
+        moviesAppTable.grantWriteData(deleteMovieFn)
+        moviesAppTable.grantReadData(getAllActorsFn)
+        moviesAppTable.grantReadData(getActorByIdFn)
+        //castTable.grantReadData(getMovieCast)
+        moviesAppTable.grantReadData(getAllAwardsFn)
 
         // REST API 
         const api = new apig.RestApi(this, "MoviesAPI", {
@@ -108,11 +150,17 @@ export class ApiStack extends cdk.Stack {
         moviesEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllMoviesFn, { proxy: true }))
         moviesEndpoint.addMethod("POST", new apig.LambdaIntegration(addMovieFn, { proxy: true }))
     
-        const movieEndpoint = moviesEndpoint.addResource("{movieId}");
+        const movieEndpoint = moviesEndpoint.addResource("{movie_id}");
         movieEndpoint.addMethod("GET", new apig.LambdaIntegration(getMovieByIdFn, { proxy: true }))
         movieEndpoint.addMethod("DELETE", new apig.LambdaIntegration(deleteMovieFn, { proxy: true }))
     
-        const movieCastEndpoint = moviesEndpoint.addResource("cast");
-        movieCastEndpoint.addMethod("GET", new apig.LambdaIntegration(getMovieCastMembersFn, { proxy: true }))
+        const actorsEndpoint = movieEndpoint.addResource("actors");
+        actorsEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllActorsFn, { proxy: true }))
+
+        const actorEndpoint = actorsEndpoint.addResource("{actor_id}");
+        actorEndpoint.addMethod("GET", new apig.LambdaIntegration(getActorByIdFn, { proxy: true }))
+
+        const awardsEndpoint = api.root.addResource("awards");
+        awardsEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllAwardsFn, { proxy: true }))
     }
 }

@@ -1,50 +1,40 @@
-import { APIGatewayProxyHandlerV2 } from "aws-lambda"
+import { Handler } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
-// Initialization
 const ddbDocClient = createDDbDocClient();
 
-// Handler
-export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
+export const handler: Handler = async (event, context) => {
   try {
-    console.log("[EVENT]", event);
-    const parameters  = event?.pathParameters;
-    const movie_id = parameters?.movie_id ? parseInt(parameters.movie_id) : undefined;
-
-    if (!movie_id) {
-      return {
-        statusCode: 404,
-        headers: {
-          "content-type": "application/json",
-        },
-        body: "Missing movie Id",
-      };
-    }
+    console.log("Event: ", event);
 
     const commandOutput = await ddbDocClient.send(
-      new DeleteCommand({
+      new ScanCommand({
         TableName: process.env.TABLE_NAME,
-        Key: { partition: `m${movie_id}`, sort: "xxxx"},
+        FilterExpression: "begins_with(#partition, :a)",
+        ExpressionAttributeNames: {
+          "#partition": "partition"
+        },
+        ExpressionAttributeValues: {
+          ":a": "a"
+        }
       })
     );
 
-    console.log('GetCommand response: ', commandOutput)
-
-    if (!commandOutput) {
+    if (!commandOutput.Items) {
       return {
         statusCode: 404,
         headers: {
           "content-type": "application/json",
         },
-        body: "Invalid movie Id",
+        body: "Invalid actor Id",
       };
     }
+
     const body = {
-      data: commandOutput,
+      data: commandOutput.Items,
     };
 
-    // Return Response
     return {
       statusCode: 200,
       headers: {
@@ -53,13 +43,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       body: JSON.stringify(body),
     };
   } catch (error: any) {
-    console.log(JSON.stringify(error));
+    console.log(error);
     return {
       statusCode: 500,
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ error }),
+      body: JSON.stringify(error),
     };
   }
 };
@@ -77,4 +67,3 @@ function createDDbDocClient() {
   const translateConfig = { marshallOptions, unmarshallOptions };
   return DynamoDBDocumentClient.from(ddbClient, translateConfig);
 }
-

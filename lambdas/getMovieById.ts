@@ -9,17 +9,17 @@ const ddbDocClient = createDDbDocClient();
 // Handler
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
-    console.log("[EVENT]", JSON.stringify(event));
+    console.log("[EVENT]", event);
     const parameters  = event?.pathParameters;
-    const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
+    const movie_id = parameters?.movie_id ? parseInt(parameters.movie_id) : undefined;
 
-    if (!movieId) {
+    if (!movie_id) {
       return {
         statusCode: 404,
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Missing movie Id" }),
+        body: "Missing movie Id",
       };
     }
 
@@ -28,7 +28,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const commandOutput = await ddbDocClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
-        Key: { id: movieId },
+        Key: { partition: `m${movie_id}`, sort: "xxxx"},
       })
     );
 
@@ -46,17 +46,17 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
     let result: any = {...commandOutput.Item}
 
-    if (cast) {
-      const castCommandOutput = await ddbDocClient.send(
-        new QueryCommand({
-          TableName: process.env.CAST_TABLE_NAME!,
-          KeyConditionExpression: "movieId = :movieId",
-          ExpressionAttributeValues: { ":movieId": movieId },
-        })
-      )
+    // if (cast) {
+    //   const castCommandOutput = await ddbDocClient.send(
+    //     new QueryCommand({
+    //       TableName: process.env.CAST_TABLE_NAME!,
+    //       KeyConditionExpression: "movie_id = :movie_id",
+    //       ExpressionAttributeValues: { ":movie_id": movie_id },
+    //     })
+    //   )
 
-      result.cast = castCommandOutput.Items || []
-    }
+    //   result.cast = castCommandOutput.Items || []
+    // }
 
     // Return Response
     return {
@@ -64,10 +64,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify(result),
+      body: JSON.stringify({ result }),
     };
   } catch (error: any) {
-    console.log(JSON.stringify(error));
+    console.log(JSON.stringify({ error }));
     return {
       statusCode: 500,
       headers: {

@@ -6,10 +6,18 @@ const ddbDocClient = createDDbDocClient();
 
 export const handler: Handler = async (event, context) => {
   try {
-    console.log("Event: ", JSON.stringify(event));
+    console.log("Event: ", event);
+    
     const commandOutput = await ddbDocClient.send(
       new ScanCommand({
         TableName: process.env.TABLE_NAME,
+        FilterExpression: "begins_with(#partition, :m)",
+        ExpressionAttributeNames: {
+          "#partition": "partition"
+        },
+        ExpressionAttributeValues: {
+          ":m": "m"
+        }        
       })
     );
 
@@ -19,7 +27,7 @@ export const handler: Handler = async (event, context) => {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({Message: "Invalid movie Id"}),
+        body: "Invalid movie Id"
       };
     }
 
@@ -32,10 +40,10 @@ export const handler: Handler = async (event, context) => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ body }),
     };
   } catch (error: any) {
-    console.log(JSON.stringify(error));
+    console.log(JSON.stringify({ error }));
     return {
       statusCode: 500,
       headers: {
