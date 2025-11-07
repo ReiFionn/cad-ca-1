@@ -1,10 +1,8 @@
 import { Handler } from "aws-lambda";
-import { AwardsQueryParams } from "../shared/types";
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommandInput, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import Ajv from "ajv";
 import schema from "../shared/types.schema.json"
-import { coerceAndCheckDataType } from "ajv/dist/compile/validate/dataType";
 
 const ajv = new Ajv({coerceTypes: true}); //https://ajv.js.org/coercion.html
 const isValidQueryParams = ajv.compile(schema.definitions["AwardsQueryParams"] || {});
@@ -51,7 +49,6 @@ export const handler: Handler = async (event, context) => {
     }
 
     let commandInput: QueryCommandInput = { TableName: process.env.TABLE_NAME }
-    
 
     if ("movie_id" in queryParams) {
       commandInput = {...commandInput,
@@ -72,12 +69,7 @@ export const handler: Handler = async (event, context) => {
           ExpressionAttributeValues: { ":w": "w", ":b": queryParams.award_body }
       }
     } else {
-      commandInput = {...commandInput,
-          FilterExpression: "award_id = :w",
-          ExpressionAttributeValues: {
-              ":w": award_id
-          }
-      }
+      
     }
 
     const commandOutput = await ddbDocClient.send(new ScanCommand(commandInput))
