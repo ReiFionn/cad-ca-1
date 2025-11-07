@@ -50,45 +50,37 @@ export const handler: Handler = async (event, context) => {
         }
     }
 
-    const award_id = event?.pathParameters?.award_id ? parseInt(event?.pathParameters.award_id) : undefined;
-
     let commandInput: QueryCommandInput = { TableName: process.env.TABLE_NAME }
+    
 
     if ("movie_id" in queryParams) {
-        commandInput = {...commandInput,
-            IndexName: "movieIx",
-            KeyConditionExpression: "award_id = :w and begins_with(movie_id, :m)",
-            ExpressionAttributeValues: {
-                ":w": award_id,
-                ":m": queryParams.movie_id
-            }
-        }
+      commandInput = {...commandInput,
+          FilterExpression: "begins_with(#partition, :wm)",
+          ExpressionAttributeNames: { "#partition": "partition" },
+          ExpressionAttributeValues: { ":wm": `w${queryParams.movie_id}` },
+      }
     } else if ("actor_id" in queryParams) {
-        commandInput = {...commandInput,
-            KeyConditionExpression: "award_id = :w and begins_with(actor_id, :a)",
-            ExpressionAttributeValues: {
-                ":w": award_id,
-                ":a": queryParams.actor_id
-            }
-        }
+      commandInput = {...commandInput,
+          FilterExpression: "begins_with(#partition, :wa)",
+          ExpressionAttributeNames: { "#partition": "partition" },
+          ExpressionAttributeValues: { ":wa": `w${queryParams.actor_id}` },
+      }
     } else if ("award_body" in queryParams) {
-        commandInput = {...commandInput,
-            KeyConditionExpression: "award_id = :w and begins_with(award_body, :b)",
-            ExpressionAttributeValues: {
-                ":w": award_id,
-                ":b": queryParams.award_body
-            }
-        }
+      commandInput = {...commandInput,
+          FilterExpression: "begins_with(#partition, :w AND contains(#body, :b))",
+          ExpressionAttributeNames: { "#partition": "partition", "#body": "body" },
+          ExpressionAttributeValues: { ":w": "w", ":b": queryParams.award_body }
+      }
     } else {
-        commandInput = {...commandInput,
-            KeyConditionExpression: "award_id = :w",
-            ExpressionAttributeValues: {
-                ":w": award_id
-            }
-        }
+      commandInput = {...commandInput,
+          FilterExpression: "award_id = :w",
+          ExpressionAttributeValues: {
+              ":w": award_id
+          }
+      }
     }
 
-    const commandOutput = await ddbDocClient.send(new QueryCommand(commandInput))
+    const commandOutput = await ddbDocClient.send(new ScanCommand(commandInput))
 
     return {
       statusCode: 200,
@@ -98,13 +90,13 @@ export const handler: Handler = async (event, context) => {
       body: JSON.stringify({data: commandOutput.Items}),
     };
   } catch (error: any) {
-    console.log(JSON.stringify({ error }));
+    console.log(JSON.stringify(error.message));
     return {
       statusCode: 500,
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ error }),
+      body: JSON.stringify(error.message),
     };
   }
 };
