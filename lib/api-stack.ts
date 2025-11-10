@@ -3,31 +3,38 @@ import * as lambdanode from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as apig from "aws-cdk-lib/aws-apigateway";
-
+import * as cognito from "aws-cdk-lib/aws-cognito";
 import { Construct } from 'constructs';
 
 interface ApiStackProps extends cdk.StackProps {
-    moviesAppTable: dynamodb.ITable
-}
+  userPoolId: string;
+  userPoolClientId: string;
+  moviesAppTable: dynamodb.ITable;
+};
 
 export class ApiStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: ApiStackProps) {
         super(scope, id, props)
 
+        const appCommonFnProps = {
+            architecture: lambda.Architecture.ARM_64,
+            timeout: cdk.Duration.seconds(10),
+            memorySize: 128,
+            runtime: lambda.Runtime.NODEJS_16_X,
+            handler: "handler",
+            environment: {
+                USER_POOL_ID: props.userPoolId,
+                CLIENT_ID: props.userPoolClientId,
+                REGION: cdk.Aws.REGION,
+            },
+        };
+
         const { moviesAppTable } = props
 
         const getMovieByIdFn = new lambdanode.NodejsFunction(this, "GetMovieByIdFn",{
-                architecture: lambda.Architecture.ARM_64,
-                runtime: lambda.Runtime.NODEJS_18_X,
-                entry: `${__dirname}/../lambdas/getMovieById.ts`,
-                timeout: cdk.Duration.seconds(10),
-                memorySize: 128,
-                environment: {
-                    TABLE_NAME: moviesAppTable.tableName,
-                    REGION: cdk.Aws.REGION,
-                },
-            }
-        );
+            ...appCommonFnProps,
+            entry: `${__dirname}/../lambdas/getMovieById.ts`,
+        })
 
         const getAllMoviesFn = new lambdanode.NodejsFunction(this, "GetAllMoviesFn", {
                 architecture: lambda.Architecture.ARM_64,
@@ -120,7 +127,20 @@ export class ApiStack extends cdk.Stack {
             }
         );
 
-        
+        const authorizerFn = new lambdanode.NodejsFunction(this, "AuthorizerFn", {
+            ...appCommonFnProps,
+            entry: `${__dirname}/../lambdas/auth/authorizer.ts`,
+        });
+
+        const requestAuthorizer = new apig.RequestAuthorizer(
+            this,
+            "RequestAuthorizer",
+            {
+            identitySources: [apig.IdentitySource.header("cookie")],
+            handler: authorizerFn,
+            resultsCacheTtl: cdk.Duration.minutes(0),
+            }
+        );
 
         moviesAppTable.grantReadData(getMovieByIdFn)
         moviesAppTable.grantReadData(getAllMoviesFn)
@@ -147,20 +167,17 @@ export class ApiStack extends cdk.Stack {
         );
 
         const moviesEndpoint = api.root.addResource("movies");
-        moviesEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllMoviesFn, { proxy: true }))
-        moviesEndpoint.addMethod("POST", new apig.LambdaIntegration(addMovieFn, { proxy: true }))
-    
+        moviesEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllMoviesFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
+        moviesEndpoint.addMethod("POST", new apig.LambdaIntegration(addMovieFn), {apiKeyRequired: true})
         const movieEndpoint = moviesEndpoint.addResource("{movie_id}");
-        movieEndpoint.addMethod("GET", new apig.LambdaIntegration(getMovieByIdFn, { proxy: true }))
-        movieEndpoint.addMethod("DELETE", new apig.LambdaIntegration(deleteMovieFn, { proxy: true }))
+        movieEndpoint.addMethod("GET", new apig.LambdaIntegration(getMovieByIdFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
+        movieEndpoint.addMethod("DELETE", new apig.LambdaIntegration(deleteMovieFn), {apiKeyRequired: true})
     
         const actorsEndpoint = movieEndpoint.addResource("actors");
-        actorsEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllActorsFn, { proxy: true }))
-
+        actorsEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllActorsFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
         const actorEndpoint = actorsEndpoint.addResource("{actor_id}");
-        actorEndpoint.addMethod("GET", new apig.LambdaIntegration(getActorByIdFn, { proxy: true }))
-
+        actorEndpoint.addMethod("GET", new apig.LambdaIntegration(getActorByIdFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
         const awardsEndpoint = api.root.addResource("awards");
-        awardsEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllAwardsFn, { proxy: true }))
+        awardsEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllAwardsFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
     }
 }
