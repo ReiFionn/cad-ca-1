@@ -1,10 +1,8 @@
 import { Handler } from "aws-lambda";
-import { AwardsQueryParams } from "../shared/types";
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommandInput, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import Ajv from "ajv";
 import schema from "../shared/types.schema.json"
-import { coerceAndCheckDataType } from "ajv/dist/compile/validate/dataType";
 
 const ajv = new Ajv({coerceTypes: true}); //https://ajv.js.org/coercion.html
 const isValidQueryParams = ajv.compile(schema.definitions["AwardsQueryParams"] || {});
@@ -16,7 +14,7 @@ export const handler: Handler = async (event, context) => {
 
     const queryParams = event.queryStringParameters
 
-    if (!queryParams) {
+    if (!queryParams) { //returns all awards if no query parameters were added
         const commandOutput = await ddbDocClient.send(new ScanCommand({
             TableName: process.env.TABLE_NAME,
             FilterExpression: "begins_with(#partition, :w)",
@@ -51,32 +49,48 @@ export const handler: Handler = async (event, context) => {
     }
 
     let commandInput: QueryCommandInput = { TableName: process.env.TABLE_NAME }
-    
 
-    if ("movie_id" in queryParams) {
+    if ("movie" in queryParams && "actor" in queryParams && "awardBody" in queryParams) { // all awards won by the movie with specified id and the actor with specified id for the specified award body
       commandInput = {...commandInput,
-          FilterExpression: "begins_with(#partition, :wm)",
-          ExpressionAttributeNames: { "#partition": "partition" },
-          ExpressionAttributeValues: { ":wm": `w${queryParams.movie_id}` },
+          FilterExpression: "(begins_with(#partition, :wm) OR begins_with(#partition, :wa)) AND contains(#body, :b)",
+          ExpressionAttributeNames: { "#partition": "partition", "#body": "body" },
+          ExpressionAttributeValues: { ":wm": `w${queryParams.movie}`, ":wa": `w${queryParams.actor}`, ":b": queryParams.awardBody }
       }
-    } else if ("actor_id" in queryParams) {
+    } else if ("actor" in queryParams && "awardBody" in queryParams) { // all awards won by the actor with specified id for the specified award body
+      commandInput = {...commandInput,
+          FilterExpression: "begins_with(#partition, :wa) AND contains(#body, :b)",
+          ExpressionAttributeNames: { "#partition": "partition", "#body": "body" },
+          ExpressionAttributeValues: { ":wa": `w${queryParams.actor}`, ":b": queryParams.awardBody }
+      }
+    } else if ("movie" in queryParams && "awardBody" in queryParams) { // all awards won by the movie with specified id for the specified award body
+      commandInput = {...commandInput,
+          FilterExpression: "begins_with(#partition, :wm) AND contains(#body, :b)",
+          ExpressionAttributeNames: { "#partition": "partition", "#body": "body"},
+          ExpressionAttributeValues: { ":wm": `w${queryParams.movie}`, ":b": queryParams.awardBody }
+      }
+    } else if ("movie" in queryParams && "actor" in queryParams) { // all awards won by the movie with specified id and by the actor with specified id
+      commandInput = {...commandInput,
+          FilterExpression: "begins_with(#partition, :wm) OR begins_with(#partition, :wa)", 
+          ExpressionAttributeNames: { "#partition": "partition" },
+          ExpressionAttributeValues: { ":wm": `w${queryParams.movie}`, ":wa": `w${queryParams.actor}` }
+      }
+    } else if ("awardBody" in queryParams) { // all awards with matching body
+      commandInput = {...commandInput,
+          FilterExpression: "begins_with(#partition, :w) AND contains(#body, :b)",
+          ExpressionAttributeNames: { "#partition": "partition", "#body": "body" },
+          ExpressionAttributeValues: { ":w": "w", ":b": queryParams.awardBody }
+      }
+    } else if ("actor" in queryParams) { // all awards won by the actor with specified id
       commandInput = {...commandInput,
           FilterExpression: "begins_with(#partition, :wa)",
           ExpressionAttributeNames: { "#partition": "partition" },
-          ExpressionAttributeValues: { ":wa": `w${queryParams.actor_id}` },
+          ExpressionAttributeValues: { ":wa": `w${queryParams.actor}` },
       }
-    } else if ("award_body" in queryParams) {
+    } else if ("movie" in queryParams) { // all awards won by the movie with specified id
       commandInput = {...commandInput,
-          FilterExpression: "begins_with(#partition, :w AND contains(#body, :b))",
-          ExpressionAttributeNames: { "#partition": "partition", "#body": "body" },
-          ExpressionAttributeValues: { ":w": "w", ":b": queryParams.award_body }
-      }
-    } else {
-      commandInput = {...commandInput,
-          FilterExpression: "award_id = :w",
-          ExpressionAttributeValues: {
-              ":w": award_id
-          }
+          FilterExpression: "begins_with(#partition, :wm)",
+          ExpressionAttributeNames: { "#partition": "partition" },
+          ExpressionAttributeValues: { ":wm": `w${queryParams.movie}` },
       }
     }
 

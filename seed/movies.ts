@@ -72,32 +72,38 @@ export const cast: Cast[] = [
 export const awards: Award[] = [
   {
     award_id: 1,
-    body: "ewgwegwegweg",
+    body: "egg",
     category: "Best Picture",
     year: 2025
   },
   {
     award_id: 2,
-    body: "ewgwegwegweg",
+    body: "bean",
     category: "Best Animated Picture",
     year: 2025
   },
   {
     award_id: 3,
-    body: "ewgwegwegweg",
+    body: "bacon",
     category: "Best Soundtrack",
     year: 2025
   },
   {
     award_id: 4,
-    body: "ewgwegwegweg",
+    body: "sausage",
     category: "Best Director",
     year: 2025
   },
   {
     award_id: 5,
-    body: "ewgwegwegweg",
+    body: "sausage",
     category: "Best Actor",
+    year: 2025
+  },
+  {
+    award_id: 5,
+    body: "carrot",
+    category: "Best Food on Set",
     year: 2025
   }
 ];
