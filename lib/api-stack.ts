@@ -166,6 +166,16 @@ export class ApiStack extends cdk.Stack {
             }
         );
 
+        const adminKey = new apig.ApiKey(this, "AdminKey", { // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_apigateway.ApiKey.html
+            apiKeyName: "AdminKey",
+            description: "Admin API key"
+        });
+
+        const adminUsagePlan = api.addUsagePlan("AdminUsagePlan", { name: "AdminUsagePlan" }) // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_apigateway.UsagePlan.html
+
+        adminUsagePlan.addApiStage({ stage: api.deploymentStage }); 
+        adminUsagePlan.addApiKey(adminKey);
+
         const moviesEndpoint = api.root.addResource("movies");
         moviesEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllMoviesFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
         moviesEndpoint.addMethod("POST", new apig.LambdaIntegration(addMovieFn), {apiKeyRequired: true})
