@@ -17,6 +17,7 @@ const isValidBodyParams = ajv.compile(
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
+  
   try {
     console.log("[EVENT]",JSON.stringify(event));
     const body = event.body ? JSON.parse(event.body) : undefined;

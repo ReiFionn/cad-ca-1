@@ -3,8 +3,11 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as custom from "aws-cdk-lib/custom-resources";
 import { generateBatch } from "../shared/utils";
 import {movies, actors, cast, awards} from "../seed/movies";
-
 import { Construct } from 'constructs';
+import { StreamViewType } from '@aws-sdk/client-dynamodb';
+import * as sources from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as lambdanode from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 
 //https://docs.aws.amazon.com/cdk/v2/guide/stack-how-to-create-multiple-stacks.html
 
@@ -20,6 +23,7 @@ export class DataStack extends cdk.Stack {
             sortKey: { name: "sort", type: dynamodb.AttributeType.STRING},
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             tableName: "MoviesApp",
+            stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES
         });
 
         const batchData = [
@@ -60,5 +64,24 @@ export class DataStack extends cdk.Stack {
             resources: [this.moviesAppTable.tableArn],
             }),
         });
+
+        // https://dev.to/iamsherif/how-to-capture-data-changes-in-dynamodb-using-streams-and-lambda-nodejs-aws-cdk-4n9n
+
+        const streamLogger = new lambdanode.NodejsFunction(this, 'StreamLoggerFn', {
+            architecture: lambda.Architecture.ARM_64,
+            timeout: cdk.Duration.seconds(10),
+            memorySize: 128,
+            runtime: lambda.Runtime.NODEJS_18_X,
+            entry: `${__dirname}/../lambdas/logger.ts`,
+            handler: 'stateChangeLogger'
+        });
+
+        this.moviesAppTable.grantStreamRead(streamLogger)
+
+        streamLogger.addEventSource(new sources.DynamoEventSource(this.moviesAppTable, {
+            startingPosition: lambda.StartingPosition.LATEST,
+            batchSize: 5,
+            retryAttempts: 2,
+        }));
     }
 }

@@ -5,6 +5,8 @@ import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 const ddbDocClient = createDDbDocClient();
 
 export const handler: Handler = async (event, context) => {
+  console.log(`${event.requestContext.authorizer.username} ${event.path}`) // https://stackoverflow.com/questions/66010442/get-cognito-user-attributes-in-lambda-function
+
   try {
     console.log("Event: ", event);
     
