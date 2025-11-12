@@ -16,6 +16,7 @@ const client = new CognitoIdentityProviderClient({
 });
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
+  
   try {
     console.log("[EVENT]",JSON.stringify(event));
     const body = event.body ? JSON.parse(event.body) : undefined;

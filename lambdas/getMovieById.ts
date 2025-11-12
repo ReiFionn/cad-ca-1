@@ -8,6 +8,8 @@ const ddbDocClient = createDDbDocClient();
 
 // Handler
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
+  console.log(`${event.requestContext.authorizer.username} ${event.path}`)
+  
   try {
     console.log("[EVENT]", event);
     const parameters  = event?.pathParameters;

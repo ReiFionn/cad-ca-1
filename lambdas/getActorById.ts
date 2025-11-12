@@ -1,12 +1,15 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda"
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { CognitoStack } from "../lib/cognito-stack";
 
 // Initialization
 const ddbDocClient = createDDbDocClient();
 
 // Handler
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
+  console.log(`${event.requestContext.authorizer.username} ${event.path}`) // https://stackoverflow.com/questions/66010442/get-cognito-user-attributes-in-lambda-function
+  
   try {
     const parameters  = event?.pathParameters;
     const movie_id = parameters?.movie_id ? parseInt(parameters.movie_id) : undefined;
