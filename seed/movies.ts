@@ -1,44 +1,53 @@
-import {Movie, Actor, Cast, Award} from '../shared/types'
+import { Movie, Actor, Cast, Award } from "../shared/types";
 
 export const movies: Movie[] = [
   {
     movie_id: 1,
-    title: "Rebel Moon - Part One: A Child of Fire",
-    release_date: "2023-12-15",
-    overview: "When a peaceful colony on the edge of the galaxy finds itself threatened by the armies of the tyrannical Regent Balisarius, they dispatch Kora, a young woman with a mysterious past, to seek out warriors from neighboring planets to help them take a stand."
+    title: "Echoes of Tomorrow",
+    release_date: "2024-04-15",
+    overview:
+      "A scientist discovers how to send messages through time, but each message creates ripples that alter the future in unpredictable ways."
   },
   {
     movie_id: 2,
-    title: "Aquaman and the Lost Kingdom",
-    release_date: "2023-12-20",
-    overview: "Black Manta, still driven by the need to avenge his father's death and wielding the power of the mythic Black Trident, will stop at nothing to take Aquaman down once and for all."
+    title: "The Last Horizon",
+    release_date: "2023-10-02",
+    overview:
+      "An astronaut stranded on a dying space station must team up with a rogue AI to survive and return to Earth."
   },
   {
     movie_id: 3,
-    title: "The Hunger Games: The Ballad of Songbirds & Snakes",
-    release_date: "2023-11-15",
-    overview: "64 years before he becomes the tyrannical president of Panem, Coriolanus Snow sees a chance for a change in fortunes when he mentors Lucy Gray Baird, the female tribute from District 12."
+    title: "Crimson Divide",
+    release_date: "2022-11-20",
+    overview:
+      "A war journalist uncovers a conspiracy that blurs the line between truth and propaganda in a conflict-torn nation."
   }
 ];
 
 export const actors: Actor[] = [
   {
     actor_id: 4,
-    name: "Joe Bloggs",
-    bio: "Award-winning British actor known for action and sci-fi roles.",
-    date_of_birth: "1985-03-12"
+    name: "Liam Cross",
+    bio: "Award-winning British actor known for intense and dramatic roles.",
+    date_of_birth: "1982-05-09"
   },
   {
     actor_id: 5,
-    name: "Alice Broggs",
-    bio: "Acclaimed actress known for dramatic performances and character depth.",
-    date_of_birth: "1990-07-24"
+    name: "Sofia Hale",
+    bio: "Renowned actress celebrated for her versatility and emotional range.",
+    date_of_birth: "1991-08-15"
   },
   {
     actor_id: 6,
-    name: "Joe Cloggs",
-    bio: "Rising star in science fiction and thriller genres.",
-    date_of_birth: "1995-01-05"
+    name: "Ethan Park",
+    bio: "South Korean actor acclaimed for his performances in action thrillers.",
+    date_of_birth: "1987-02-22"
+  },
+  {
+    actor_id: 7,
+    name: "Amara Singh",
+    bio: "Emerging star known for her powerful portrayals in independent films.",
+    date_of_birth: "1996-06-30"
   }
 ];
 
@@ -46,64 +55,108 @@ export const cast: Cast[] = [
   {
     movie_id: 1,
     actor_id: 4,
-    role_name: "Male Character 1",
-    role_description: "description of character 1"
-  },
-  {
-    movie_id: 2,
-    actor_id: 5,
-    role_name: "Female Character 1",
-    role_description: "description of character 2"
-  },
-  {
-    movie_id: 3,
-    actor_id: 6,
-    role_name: "Male Character 2",
-    role_description: "description of character 3"
+    role_name: "Dr. Nathan Cole",
+    role_description: "A physicist haunted by his past as he manipulates time itself."
   },
   {
     movie_id: 1,
     actor_id: 5,
-    role_name: "Male Character 2",
-    role_description: "description of character 3"
+    role_name: "Elena Rivers",
+    role_description: "A journalist determined to expose the scientist's secret experiments."
+  },
+  {
+    movie_id: 1,
+    actor_id: 6,
+    role_name: "Agent Silva",
+    role_description: "A government agent tracking illegal time technology."
+  },
+
+  {
+    movie_id: 2,
+    actor_id: 4,
+    role_name: "Commander Lee Min",
+    role_description: "An astronaut trapped aboard a decaying orbital station."
+  },
+  {
+    movie_id: 2,
+    actor_id: 6,
+    role_name: "Nova",
+    role_description: "A sentient AI that questions its own morality."
+  },
+  {
+    movie_id: 2,
+    actor_id: 7,
+    role_name: "Dr. Marcus Vale",
+    role_description: "Mission director torn between rescue and sacrifice."
+  },
+
+  {
+    movie_id: 3,
+    actor_id: 4,
+    role_name: "Clara Voss",
+    role_description: "A war correspondent uncovering truths hidden in plain sight."
+  },
+  {
+    movie_id: 3,
+    actor_id: 7,
+    role_name: "Captain Ryker",
+    role_description: "A disillusioned soldier caught between loyalty and truth."
+  },
+  {
+    movie_id: 3,
+    actor_id: 5,
+    role_name: "Lina Ortiz",
+    role_description: "A hacker leaking classified information to expose corruption."
   }
 ];
 
 export const awards: Award[] = [
   {
     award_id: 1,
-    body: "egg",
+    body: "Academy Awards",
     category: "Best Picture",
-    year: 2025
-  },
-  {
-    award_id: 2,
-    body: "bean",
-    category: "Best Animated Picture",
-    year: 2025
-  },
-  {
-    award_id: 3,
-    body: "bacon",
-    category: "Best Soundtrack",
-    year: 2025
+    year: 2024
   },
   {
     award_id: 4,
-    body: "sausage",
+    body: "BAFTA",
     category: "Best Director",
-    year: 2025
+    year: 2024
   },
   {
     award_id: 5,
-    body: "sausage",
-    category: "Best Actor",
-    year: 2025
+    body: "Golden Globes",
+    category: "Best Actress",
+    year: 2024
   },
   {
-    award_id: 5,
-    body: "carrot",
-    category: "Best Food on Set",
-    year: 2025
+    award_id: 2,
+    body: "Cannes Film Festival",
+    category: "Best Screenplay",
+    year: 2023
+  },
+  {
+    award_id: 3,
+    body: "Sundance",
+    category: "Audience Choice Award",
+    year: 2023
+  },
+  {
+    award_id: 1,
+    body: "Critics Choice",
+    category: "Best Cinematography",
+    year: 2024
+  },
+  {
+    award_id: 7,
+    body: "Independent Spirit Awards",
+    category: "Best Supporting Actor",
+    year: 2023
+  },
+  {
+    award_id: 1,
+    body: "Saturn Awards",
+    category: "Best Sci-Fi Feature",
+    year: 2024
   }
 ];
