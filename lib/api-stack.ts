@@ -5,6 +5,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as apig from "aws-cdk-lib/aws-apigateway";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import { Construct } from 'constructs';
+import { movies } from '../seed/movies';
 
 interface ApiStackProps extends cdk.StackProps {
   userPoolId: string;
@@ -16,20 +17,21 @@ export class ApiStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: ApiStackProps) {
         super(scope, id, props)
 
+        const { moviesAppTable } = props
+
         const appCommonFnProps = {
             architecture: lambda.Architecture.ARM_64,
             timeout: cdk.Duration.seconds(10),
             memorySize: 128,
-            runtime: lambda.Runtime.NODEJS_16_X,
+            runtime: lambda.Runtime.NODEJS_18_X,
             handler: "handler",
             environment: {
                 USER_POOL_ID: props.userPoolId,
                 CLIENT_ID: props.userPoolClientId,
                 REGION: cdk.Aws.REGION,
+                TABLE_NAME: moviesAppTable.tableName
             },
         };
-
-        const { moviesAppTable } = props
 
         const getMovieByIdFn = new lambdanode.NodejsFunction(this, "GetMovieByIdFn",{
             ...appCommonFnProps,
@@ -37,95 +39,39 @@ export class ApiStack extends cdk.Stack {
         })
 
         const getAllMoviesFn = new lambdanode.NodejsFunction(this, "GetAllMoviesFn", {
-                architecture: lambda.Architecture.ARM_64,
-                runtime: lambda.Runtime.NODEJS_18_X,
-                entry: `${__dirname}/../lambdas/getAllMovies.ts`,
-                timeout: cdk.Duration.seconds(10),
-                memorySize: 128,
-                environment: {
-                    TABLE_NAME: moviesAppTable.tableName,
-                    REGION: cdk.Aws.REGION,
-                },
-            }
-        );
+            ...appCommonFnProps,
+            entry: `${__dirname}/../lambdas/getAllMovies.ts`,
+        })
 
         const getAllActorsFn = new lambdanode.NodejsFunction(this, "GetAllActorsFn", {
-                architecture: lambda.Architecture.ARM_64,
-                runtime: lambda.Runtime.NODEJS_16_X,
-                entry: `${__dirname}/../lambdas/getAllActors.ts`,
-                timeout: cdk.Duration.seconds(10),
-                memorySize: 128,
-                environment: {
-                    TABLE_NAME: moviesAppTable.tableName,
-                    REGION: cdk.Aws.REGION,
-                },
-            }
-        );
+            ...appCommonFnProps,
+            entry: `${__dirname}/../lambdas/getAllActors.ts`,
+        })
 
-        const getActorByIdFn = new lambdanode.NodejsFunction(this, "GetActorByIdFn",{
-                architecture: lambda.Architecture.ARM_64,
-                runtime: lambda.Runtime.NODEJS_18_X,
-                entry: `${__dirname}/../lambdas/getActorById.ts`,
-                timeout: cdk.Duration.seconds(10),
-                memorySize: 128,
-                environment: {
-                    TABLE_NAME: moviesAppTable.tableName,
-                    REGION: cdk.Aws.REGION,
-                },
-            }
-        );
+        // const getActorByIdFn = new lambdanode.NodejsFunction(this, "GetActorByIdFn",{
+        //        ...appCommonFnProps,
+        //         entry: `${__dirname}/../lambdas/getActorById.ts`,
+        //  })
         
         const addMovieFn = new lambdanode.NodejsFunction(this, "AddMovieFn", {
-                architecture: lambda.Architecture.ARM_64,
-                runtime: lambda.Runtime.NODEJS_16_X,
-                entry: `${__dirname}/../lambdas/addMovie.ts`,
-                timeout: cdk.Duration.seconds(10),
-                memorySize: 128,
-                environment: {
-                    TABLE_NAME: moviesAppTable.tableName,
-                    REGION: cdk.Aws.REGION,
-                },
-            }
-        );
+            ...appCommonFnProps,
+            entry: `${__dirname}/../lambdas/addMovie.ts`,
+        });
     
         const deleteMovieFn = new lambdanode.NodejsFunction(this, "DeleteMovieFn", {
-                architecture: lambda.Architecture.ARM_64,
-                runtime: lambda.Runtime.NODEJS_16_X,
-                entry: `${__dirname}/../lambdas/deleteMovieById.ts`,
-                timeout: cdk.Duration.seconds(10),
-                memorySize: 128,
-                environment: {
-                    TABLE_NAME: moviesAppTable.tableName,
-                    REGION: cdk.Aws.REGION,
-                },
-            }
-        );
+            ...appCommonFnProps,
+            entry: `${__dirname}/../lambdas/deleteMovieById.ts`,
+        })
 
-        // const getMovieCastFn = new lambdanode.NodejsFunction(this, "GetMovieCastFn", {
-        //     architecture: lambda.Architecture.ARM_64,
-        //         runtime: lambda.Runtime.NODEJS_16_X,
-        //         entry: `${__dirname}/../lambdas/getMovieCast.ts`,
-        //         timeout: cdk.Duration.seconds(10),
-        //         memorySize: 128,
-        //         environment: {
-        //             TABLE_NAME: castTable.tableName,
-        //             REGION: cdk.Aws.REGION,
-        //         },
-        //     }
-        // )
+        const getMovieCastMemberFn = new lambdanode.NodejsFunction(this, "GetMovieCastMemberFn", {
+            ...appCommonFnProps,
+            entry: `${__dirname}/../lambdas/getMovieCastMember.ts`,
+        })
 
         const getAllAwardsFn = new lambdanode.NodejsFunction(this, "GetAllAwardsFn", {
-                architecture: lambda.Architecture.ARM_64,
-                runtime: lambda.Runtime.NODEJS_18_X,
-                entry: `${__dirname}/../lambdas/getAllAwards.ts`,
-                timeout: cdk.Duration.seconds(10),
-                memorySize: 128,
-                environment: {
-                    TABLE_NAME: moviesAppTable.tableName,
-                    REGION: cdk.Aws.REGION,
-                },
-            }
-        );
+            ...appCommonFnProps,
+            entry: `${__dirname}/../lambdas/getAllAwards.ts`,
+        })
 
         const authorizerFn = new lambdanode.NodejsFunction(this, "AuthorizerFn", {
             ...appCommonFnProps,
@@ -147,8 +93,7 @@ export class ApiStack extends cdk.Stack {
         moviesAppTable.grantReadWriteData(addMovieFn)
         moviesAppTable.grantWriteData(deleteMovieFn)
         moviesAppTable.grantReadData(getAllActorsFn)
-        moviesAppTable.grantReadData(getActorByIdFn)
-        //castTable.grantReadData(getMovieCast)
+        moviesAppTable.grantReadData(getMovieCastMemberFn)
         moviesAppTable.grantReadData(getAllAwardsFn)
 
         // REST API 
@@ -186,7 +131,8 @@ export class ApiStack extends cdk.Stack {
         const actorsEndpoint = movieEndpoint.addResource("actors");
         actorsEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllActorsFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
         const actorEndpoint = actorsEndpoint.addResource("{actor_id}");
-        actorEndpoint.addMethod("GET", new apig.LambdaIntegration(getActorByIdFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
+        actorEndpoint.addMethod("GET", new apig.LambdaIntegration(getMovieCastMemberFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
+        
         const awardsEndpoint = api.root.addResource("awards");
         awardsEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllAwardsFn), {authorizer: requestAuthorizer, authorizationType: apig.AuthorizationType.CUSTOM})
     }

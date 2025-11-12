@@ -11,8 +11,8 @@
     "schema": "typescript-json-schema --noExtraProps --required --refs false -o ./shared/types.schema.json  \"./shared/types.d.ts\" \"*\""
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.145",
-    "@types/node": "^22.19.0",
+    "@types/aws-lambda": "^8.10.158",
+    "@types/node": "^22.19.1",
     "aws-cdk": "2.1027.0",
     "esbuild": "^0.24.0",
     "ts-node": "^10.9.2",
