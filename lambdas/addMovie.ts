@@ -39,8 +39,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       })
     );
 
-    //console.log(`POST + m${body.movie_id} | `); LAMBDA
-
     return {
       statusCode: 201,
       headers: {
