@@ -1,32 +1,31 @@
 ## Assignment - Cloud App Development.
 
 __Name:__ Fionn Reilly 
-### Links.
+
+### Links
 __Demo:__ A link to your YouTube video demonstration.
 
-### Screenshots.
+### Screenshots
 
-[A screenshot of the App Web API from the management console, e.g.
+Screenshot of the App Web API from the management console:
 
 ![][api]
 
-The Auth API is not required as its code was provided in the labs.
-
-]
-
-[A screenshot of your seeded table from DynamoDB, e.g.
+Screenshot of seeded table from DynamoDB:
 
 ![][db]
-]
 
-[A screenshot from CloudWatch logs showing an example of User Activity logging, e.g.
 
-jbloggs /awards?movie=1234&awardBody=Academy
+Screenshot from CloudWatch logs showing an example of User Activity logging:
 
 ![][cw]
-]
 
-### Design features (if required).
+Screenshot from CloudWatch logs showing an example of State Change logging:
+
+![][cwsc]
+
+
+### Design features
 
 ![][diagram]
 
@@ -37,14 +36,15 @@ The app is split into 3 different stacks:
 - cognito-stack: Defines user authentication resources (User Pool and App Client)
 - data-stack: Creates and seeds the DynamoDB table with movies, actors, cast, and awards data. Configures DynamoDB Streams for logging state changes.
 
-###  Extra (If relevant).
+User logging for every request + state change logging on administrative requests (POST + DELETE)
 
-[ State any other aspects of your solution that use CDK/serverless features not covered in the lectures.]
+###  Extra
 
-
+- Multi-stacking
+- API Key generation and usage plans for administrative requests
 
 [api]: ./images/api.png
 [db]: ./images/db.png
 [cw]: ./images/cw.png
 [diagram]: ./images/diagram.png
-
+[cwsc]: ./images/cwsc.png
